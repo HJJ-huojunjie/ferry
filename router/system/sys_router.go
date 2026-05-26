@@ -132,6 +132,21 @@ func RegisterSysSettingRouter(v1 *gin.RouterGroup, authMiddleware *jwt.GinJWTMid
 	}
 }
 
+func RegisterNotifyConfigRouter(v1 *gin.RouterGroup, authMiddleware *jwt.GinJWTMiddleware) {
+	notifyConfig := v1.Group("/notifyConfig").Use(authMiddleware.MiddlewareFunc()).Use(middleware.AuthCheckRole())
+	{
+		notifyConfig.GET("", system.GetNotifyConfigList)
+		notifyConfig.POST("", system.CreateNotifyConfig)
+		notifyConfig.PUT("", system.UpdateNotifyConfig)
+		notifyConfig.DELETE("/:id", system.DeleteNotifyConfig)
+	}
+
+	notifyInit := v1.Group("/notifyInit").Use(authMiddleware.MiddlewareFunc()).Use(middleware.AuthCheckRole())
+	{
+		notifyInit.POST("", system.InitNotifyTables)
+	}
+}
+
 func registerPublicRouter(v1 *gin.RouterGroup) {
 	p := v1.Group("/public")
 	{

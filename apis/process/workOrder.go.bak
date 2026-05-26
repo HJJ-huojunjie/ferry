@@ -342,9 +342,6 @@ func InversionWorkOrder(c *gin.Context) {
 
 	tx.Commit()
 
-	// === [新增] 转交工单成功后，向被转交人发送飞书等通道通知（异步、独立、失败不影响主流程） ===
-	SendTransferNotify(params.WorkOrderId, params.UserId, currentUserInfo.NickName, params.Remarks)
-
 	app.OK(c, nil, "工单已手动结单")
 }
 

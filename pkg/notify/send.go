@@ -6,6 +6,8 @@ import (
 	"ferry/pkg/logger"
 	"ferry/pkg/notify/dingtalk"
 	"ferry/pkg/notify/email"
+	"ferry/pkg/notify/feishu"
+	"ferry/pkg/notify/wecom"
 	"fmt"
 	"text/template"
 
@@ -92,6 +94,50 @@ func (b *BodyData) SendNotify() (err error) {
 					go dingtalk.SendDingMsg(phoneList, url, b.Title, b.Creator, b.PriorityValue, b.CreatedAt)
 				}
 			}
+		case 2: // 飞书应用通知（实时根据手机号查询OpenID发送）
+			users := b.SendTo.(map[string]interface{})["userList"].([]system.SysUser)
+			if len(users) > 0 {
+				var phones []string
+				for _, user := range users {
+					if user.Phone != "" {
+						phones = append(phones, user.Phone)
+					}
+				}
+				if len(phones) == 0 {
+					logger.Warn("飞书应用通知：处理人未填写手机号，跳过")
+					break
+				}
+				url := fmt.Sprintf("%s/#/process/handle-ticket?workOrderId=%d&processId=%d", b.Domain, b.Id, b.ProcessId)
+				msgContent := fmt.Sprintf("工单标题：%s\n创建人：%s\n优先级：%s\n创建时间：%s\n处理链接：%s",
+					b.Title, b.Creator, b.PriorityValue, b.CreatedAt, url)
+				go feishu.SendFeishuMsgByPhone(phones, b.Subject, msgContent)
+			}
+		case 3: // 飞书群通知
+			url := fmt.Sprintf("%s/#/process/handle-ticket?workOrderId=%d&processId=%d", b.Domain, b.Id, b.ProcessId)
+			msgContent := fmt.Sprintf("工单标题：%s\n创建人：%s\n优先级：%s\n创建时间：%s\n处理链接：%s",
+				b.Title, b.Creator, b.PriorityValue, b.CreatedAt, url)
+			go feishu.SendFeishuGroupMsg(b.Subject, msgContent)
+		case 4: // 钉钉应用通知
+			users := b.SendTo.(map[string]interface{})["userList"].([]system.SysUser)
+			if len(users) > 0 {
+				for _, user := range users {
+					phoneList = append(phoneList, user.Phone)
+				}
+				url := fmt.Sprintf("%s/#/process/handle-ticket?workOrderId=%d&processId=%d", b.Domain, b.Id, b.ProcessId)
+				go dingtalk.SendDingMsg(phoneList, url, b.Title, b.Creator, b.PriorityValue, b.CreatedAt)
+			}
+		case 5: // 钉钉群通知
+			url := fmt.Sprintf("%s/#/process/handle-ticket?workOrderId=%d&processId=%d", b.Domain, b.Id, b.ProcessId)
+			msgContent := fmt.Sprintf("工单标题：%s\n创建人：%s\n优先级：%s\n创建时间：%s\n处理链接：%s",
+				b.Title, b.Creator, b.PriorityValue, b.CreatedAt, url)
+			go wecom.SendDingGroupMsg(b.Subject, msgContent)
+		case 6: // 企微应用通知（暂未实现）
+			logger.Warn("企微应用通知暂未实现实时查询模式，跳过")
+		case 7: // 企微群通知
+			url := fmt.Sprintf("%s/#/process/handle-ticket?workOrderId=%d&processId=%d", b.Domain, b.Id, b.ProcessId)
+			msgContent := fmt.Sprintf("工单标题：%s\n创建人：%s\n优先级：%s\n创建时间：%s\n处理链接：%s",
+				b.Title, b.Creator, b.PriorityValue, b.CreatedAt, url)
+			go wecom.SendWecomGroupMsg(b.Subject, msgContent)
 		}
 	}
 	return

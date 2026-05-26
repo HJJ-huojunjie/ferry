@@ -65,6 +65,9 @@ func sysCheckRoleRouterInit(r *gin.RouterGroup, authMiddleware *jwtauth.GinJWTMi
 	systemRouter.RegisterLoginLogRouter(v1, authMiddleware)
 	systemRouter.RegisterSysSettingRouter(v1, authMiddleware)
 
+	// 第三方通知配置
+	systemRouter.RegisterNotifyConfigRouter(v1, authMiddleware)
+
 	// 流程中心
 	process.RegisterClassifyRouter(v1, authMiddleware)
 	process.RegisterProcessRouter(v1, authMiddleware)
