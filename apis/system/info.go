@@ -1,7 +1,10 @@
 package system
 
 import (
+	"ferry/global/orm"
 	"ferry/models/system"
+	"ferry/pkg/logger"
+	"ferry/pkg/notify/feishu"
 	"ferry/tools"
 	"ferry/tools/app"
 
@@ -51,10 +54,27 @@ func GetInfo(c *gin.Context) {
 	if user.Avatar != "" {
 		mp["avatar"] = user.Avatar
 	}
-	mp["userName"] = user.NickName
+
+	// 自动从飞书同步用户姓名：如果 nick_name 为空或等于 username，尝试通过手机号从飞书获取真实姓名
+	displayName := user.NickName
+	if (displayName == "" || displayName == user.Username) && user.Phone != "" {
+		feishuConfig, cfgErr := system.GetEnabledNotifyConfig(2) // 2=飞书单聊
+		if cfgErr == nil && feishuConfig.AppId != "" {
+			feishuName, nameErr := feishu.GetFeishuUserNameByPhone(user.Phone, feishuConfig.AppId, feishuConfig.AppSecret)
+			if nameErr == nil && feishuName != "" {
+				displayName = feishuName
+				// 缓存到数据库，避免每次都调用飞书API
+				orm.Eloquent.Table("sys_user").Where("user_id = ?", user.UserId).
+					Update("nick_name", feishuName)
+				logger.Infof("已从飞书同步用户姓名: %s -> %s", user.Username, feishuName)
+			}
+		}
+	}
+
+	mp["userName"] = displayName
 	mp["userId"] = user.UserId
 	mp["deptId"] = user.DeptId
-	mp["name"] = user.NickName
+	mp["name"] = displayName
 
 	app.OK(c, mp, "")
 }

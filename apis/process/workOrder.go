@@ -12,6 +12,7 @@ import (
 	"ferry/tools/app"
 	"fmt"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -225,7 +226,7 @@ func UnityWorkOrder(c *gin.Context) {
 	app.OK(c, nil, "工单已结束")
 }
 
-// 转交工单
+// 转交工单（支持转交给多人）
 func InversionWorkOrder(c *gin.Context) {
 	var (
 		cirHistoryValue   []process.CirculationHistory
@@ -234,13 +235,12 @@ func InversionWorkOrder(c *gin.Context) {
 		stateList         []map[string]interface{}
 		stateValue        []byte
 		currentState      map[string]interface{}
-		userInfo          system.SysUser
 		currentUserInfo   system.SysUser
 		costDurationValue int64
 		params            struct {
 			WorkOrderId int    `json:"work_order_id"`
 			NodeId      string `json:"node_id"`
-			UserId      int    `json:"user_id"`
+			UserIds     []int  `json:"user_ids"`
 			Remarks     string `json:"remarks"`
 		}
 	)
@@ -260,6 +260,11 @@ func InversionWorkOrder(c *gin.Context) {
 		return
 	}
 
+	if len(params.UserIds) == 0 {
+		app.Error(c, -1, fmt.Errorf("用户列表不能为空"), "请选择至少一个转交用户")
+		return
+	}
+
 	// 查询工单信息
 	err = orm.Eloquent.Model(&workOrderInfo).
 		Where("id = ?", params.WorkOrderId).
@@ -276,10 +281,21 @@ func InversionWorkOrder(c *gin.Context) {
 		return
 	}
 
+	// 将所有被转交用户设置为该节点的处理人
+	processorList := make([]interface{}, 0, len(params.UserIds))
+	for _, uid := range params.UserIds {
+		processorList = append(processorList, uid)
+	}
 	for _, s := range stateList {
 		if s["id"].(string) == params.NodeId {
-			s["processor"] = []interface{}{params.UserId}
+			s["processor"] = processorList
 			s["process_method"] = "person"
+			// 转交给多人时，标记为会签模式，需所有人都处理完才算完成
+			if len(params.UserIds) > 1 {
+				s["isCounterSign"] = true
+			} else {
+				s["isCounterSign"] = false
+			}
 			currentState = s
 			break
 		}
@@ -302,14 +318,23 @@ func InversionWorkOrder(c *gin.Context) {
 		return
 	}
 
-	// 查询用户信息
+	// 查询所有被转交用户信息
+	var userInfoList []system.SysUser
 	err = tx.Model(&system.SysUser{}).
-		Where("user_id = ?", params.UserId).
-		Find(&userInfo).Error
+		Where("user_id in (?)", params.UserIds).
+		Find(&userInfoList).Error
 	if err != nil {
+		tx.Rollback()
 		app.Error(c, -1, err, fmt.Sprintf("查询用户信息失败，%v", err.Error()))
 		return
 	}
+
+	// 收集被转交人昵称
+	nickNames := make([]string, 0, len(userInfoList))
+	for _, u := range userInfoList {
+		nickNames = append(nickNames, u.NickName)
+	}
+	nickNameStr := strings.Join(nickNames, "、")
 
 	// 流转历史写入
 	err = orm.Eloquent.Model(&cirHistoryValue).
@@ -335,17 +360,17 @@ func InversionWorkOrder(c *gin.Context) {
 		Circulation:  "转交",
 		Processor:    currentUserInfo.NickName,
 		ProcessorId:  tools.GetUserId(c),
-		Remarks:      fmt.Sprintf("此阶段负责人已转交给《%v》", userInfo.NickName),
+		Remarks:      fmt.Sprintf("此阶段负责人已转交给《%v》", nickNameStr),
 		Status:       2, // 其他
 		CostDuration: costDurationValue,
 	})
 
 	tx.Commit()
 
-	// === [新增] 转交工单成功后，向被转交人发送飞书等通道通知（异步、独立、失败不影响主流程） ===
-	SendTransferNotify(params.WorkOrderId, params.UserId, currentUserInfo.NickName, params.Remarks)
+	// 转交工单成功后，向所有被转交人发送通知（异步、独立、失败不影响主流程）
+	SendTransferNotify(params.WorkOrderId, params.UserIds, currentUserInfo.NickName, params.Remarks)
 
-	app.OK(c, nil, "工单已手动结单")
+	app.OK(c, nil, "工单转交成功")
 }
 
 // 催办工单

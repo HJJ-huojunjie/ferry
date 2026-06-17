@@ -265,3 +265,58 @@ func (s *Statistics) HandlePeriodRank() (interface{}, error) {
 		Scan(&ranks).Error
 	return ranks, err
 }
+
+// LatestWorkOrders 最新工单动态（最近 10 条工单操作记录）
+func (s *Statistics) LatestWorkOrders() (interface{}, error) {
+	var records []struct {
+		ID          int    `json:"id"`
+		Title       string `json:"title"`
+		Creator     string `json:"creator"`
+		Status      string `json:"status"`
+		ProcessName string `json:"process_name"`
+		CreateTime  string `json:"create_time"`
+		IsEnd       int    `json:"is_end"`
+	}
+	err := orm.Eloquent.Model(&process.WorkOrderInfo{}).
+		Joins("left join sys_user on sys_user.user_id = p_work_order_info.creator").
+		Joins("left join p_process_info on p_process_info.id = p_work_order_info.process").
+		Select("p_work_order_info.id, p_work_order_info.title, sys_user.nick_name as creator, p_process_info.name as process_name, date_format(p_work_order_info.create_time, '%Y-%m-%d %H:%i') as create_time, p_work_order_info.is_end").
+		Order("p_work_order_info.create_time desc").
+		Limit(10).
+		Scan(&records).Error
+	for i := range records {
+		if records[i].IsEnd == 1 {
+			records[i].Status = "已完成"
+		} else {
+			records[i].Status = "处理中"
+		}
+	}
+	return records, err
+}
+
+// ExtendedCount 扩展统计（处理中、已完成、解决率）
+func (s *Statistics) ExtendedCount() (map[string]interface{}, error) {
+	var totalCount, completedCount, processingCount int64
+	result := make(map[string]interface{})
+
+	// 工单总数
+	orm.Eloquent.Model(&process.WorkOrderInfo{}).Count(&totalCount)
+	// 已完成
+	orm.Eloquent.Model(&process.WorkOrderInfo{}).Where("is_end = 1").Count(&completedCount)
+	// 处理中
+	orm.Eloquent.Model(&process.WorkOrderInfo{}).Where("is_end = 0").Count(&processingCount)
+
+	result["total"] = totalCount
+	result["completed"] = completedCount
+	result["processing"] = processingCount
+	result["pending"] = processingCount // 待处理 = 处理中
+
+	// 解决率
+	if totalCount > 0 {
+		result["resolution_rate"] = fmt.Sprintf("%.1f", float64(completedCount)/float64(totalCount)*100)
+	} else {
+		result["resolution_rate"] = "0.0"
+	}
+
+	return result, nil
+}

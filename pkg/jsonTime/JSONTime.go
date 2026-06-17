@@ -7,6 +7,7 @@ package jsonTime
 import (
 	"database/sql/driver"
 	"fmt"
+	"strings"
 	"time"
 )
 
@@ -18,6 +19,33 @@ type JSONTime struct {
 func (t JSONTime) MarshalJSON() ([]byte, error) {
 	formatted := fmt.Sprintf("\"%s\"", t.Format("2006-01-02 15:04:05"))
 	return []byte(formatted), nil
+}
+
+// UnmarshalJSON 反序列化，兼容多种时间字符串格式及空值
+func (t *JSONTime) UnmarshalJSON(data []byte) error {
+	s := strings.Trim(string(data), "\"")
+	if s == "" || s == "null" || s == "0001-01-01 00:00:00" {
+		*t = JSONTime{Time: time.Time{}}
+		return nil
+	}
+	layouts := []string{
+		"2006-01-02 15:04:05",
+		time.RFC3339,
+		time.RFC3339Nano,
+		"2006-01-02T15:04:05",
+		"2006-01-02",
+	}
+	var lastErr error
+	loc := time.Local
+	for _, layout := range layouts {
+		parsed, err := time.ParseInLocation(layout, s, loc)
+		if err == nil {
+			*t = JSONTime{Time: parsed}
+			return nil
+		}
+		lastErr = err
+	}
+	return fmt.Errorf("无法解析时间 %q: %v", s, lastErr)
 }
 
 func (t JSONTime) Value() (driver.Value, error) {

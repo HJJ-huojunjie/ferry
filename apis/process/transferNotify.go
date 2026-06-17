@@ -17,15 +17,15 @@ import (
             飞书 / 钉钉 / 企微 / 邮件 等多通道通知，沿用流程绑定的通知类型 (process.notice)。
 */
 
-// SendTransferNotify 发送工单转交通知
+// SendTransferNotify 发送工单转交通知（支持多人）
 //   workOrderId : 工单ID
-//   toUserId    : 被转交人(新处理人)的 ferry 用户ID
+//   toUserIds   : 被转交人(新处理人)的 ferry 用户ID列表
 //   operatorName: 转交操作者(当前登录用户)的昵称，用于通知正文
 //   remarks     : 转交备注(可空)
 //
 // 该方法内部已加 recover，且全部以 goroutine 形式异步运行，
 // 不会影响 InversionWorkOrder 主流程的事务/返回结果。
-func SendTransferNotify(workOrderId int, toUserId int, operatorName string, remarks string) {
+func SendTransferNotify(workOrderId int, toUserIds []int, operatorName string, remarks string) {
 	go func() {
 		defer func() {
 			if r := recover(); r != nil {
@@ -61,16 +61,15 @@ func SendTransferNotify(workOrderId int, toUserId int, operatorName string, rema
 			}
 		}
 		if len(noticeList) == 0 {
-			// 流程未绑定任何通知通道，直接返回
 			logger.Info("转交通知-流程未配置通知通道，跳过")
 			return
 		}
 
-		// 3. 查询被转交人(收件人)
-		var toUser system.SysUser
+		// 3. 查询所有被转交人(收件人)
+		var toUsers []system.SysUser
 		err = orm.Eloquent.Model(&system.SysUser{}).
-			Where("user_id = ?", toUserId).
-			Find(&toUser).Error
+			Where("user_id in (?)", toUserIds).
+			Find(&toUsers).Error
 		if err != nil {
 			logger.Errorf("转交通知-查询被转交人失败: %v", err)
 			return
@@ -83,10 +82,9 @@ func SendTransferNotify(workOrderId int, toUserId int, operatorName string, rema
 			Find(&creatorUser).Error
 		if err != nil {
 			logger.Errorf("转交通知-查询工单创建人失败: %v", err)
-			// 创建人查不到不影响主流程，使用空昵称继续
 		}
 
-		// 5. 组装通知体并发送
+		// 5. 组装通知体并发送给所有被转交人
 		subject := fmt.Sprintf("您有一条被转交的待办工单，请及时处理")
 		description := fmt.Sprintf("%s 已将工单转交给您处理，请及时跟进。", operatorName)
 		if remarks != "" {
@@ -95,7 +93,7 @@ func SendTransferNotify(workOrderId int, toUserId int, operatorName string, rema
 
 		bodyData := notify.BodyData{
 			SendTo: map[string]interface{}{
-				"userList": []system.SysUser{toUser},
+				"userList": toUsers,
 			},
 			EmailCcTo:   []string{},
 			Subject:     subject,
@@ -107,12 +105,13 @@ func SendTransferNotify(workOrderId int, toUserId int, operatorName string, rema
 			Creator:     creatorUser.NickName,
 			Priority:    workOrderInfo.Priority,
 			CreatedAt:   workOrderInfo.CreatedAt.Format("2006-01-02 15:04:05"),
+			Remarks:     remarks,
 		}
 
 		if err = bodyData.SendNotify(); err != nil {
 			logger.Errorf("转交工单通知发送失败: %v", err)
 			return
 		}
-		logger.Infof("转交工单通知已发送: workOrderId=%d -> userId=%d", workOrderId, toUserId)
+		logger.Infof("转交工单通知已发送: workOrderId=%d -> userIds=%v", workOrderId, toUserIds)
 	}()
 }

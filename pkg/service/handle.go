@@ -365,26 +365,52 @@ func (h *Handle) commonProcessing(c *gin.Context) (err error) {
 		return
 	}
 
-	// 会签
+	// 检查是否需要会签（多人处理场景：所有处理人都完成才流转）
+	needCounterSign := false
+
+	// 1. 检查流程定义中的会签标记
 	if h.stateValue["assignValue"] != nil && len(h.stateValue["assignValue"].([]interface{})) > 0 {
 		if isCounterSign, ok := h.stateValue["isCounterSign"]; ok {
 			if isCounterSign.(bool) {
-				h.endHistory = false
-				err = h.Countersign(c)
-				if err != nil {
-					return
-				}
-			} else {
-				err = h.circulation()
-				if err != nil {
-					return
+				needCounterSign = true
+			}
+		}
+	}
+
+	// 2. 检查工单状态中的处理人列表（转交多人或流程配置多人场景）
+	// 只要当前节点有多个个人处理人，就自动启用会签模式
+	if !needCounterSign {
+		var workOrderStateList []map[string]interface{}
+		if err2 := json.Unmarshal(h.workOrderDetails.State, &workOrderStateList); err2 == nil {
+			for _, ws := range workOrderStateList {
+				if ws["id"].(string) == h.stateValue["id"].(string) {
+					// 获取处理方式和处理人列表
+					processMethod, _ := ws["process_method"].(string)
+					if processors, ok3 := ws["processor"].([]interface{}); ok3 && len(processors) > 1 && processMethod == "person" {
+						// 多个个人处理人，自动启用会签（所有人都要处理）
+						needCounterSign = true
+					}
+					// 兼容：如果显式标记了isCounterSign，也启用
+					if !needCounterSign {
+						if ics, ok := ws["isCounterSign"]; ok {
+							if icsBool, ok2 := ics.(bool); ok2 && icsBool {
+								if processors, ok3 := ws["processor"].([]interface{}); ok3 && len(processors) > 1 {
+									needCounterSign = true
+								}
+							}
+						}
+					}
+					break
 				}
 			}
-		} else {
-			err = h.circulation()
-			if err != nil {
-				return
-			}
+		}
+	}
+
+	if needCounterSign {
+		h.endHistory = false
+		err = h.Countersign(c)
+		if err != nil {
+			return
 		}
 	} else {
 		err = h.circulation()
@@ -837,12 +863,13 @@ func (h *Handle) HandleWorkOrder(
 		Creator:     applyUserInfo.NickName,
 		Priority:    h.workOrderDetails.Priority,
 		CreatedAt:   h.workOrderDetails.CreatedAt.Format("2006-01-02 15:04:05"),
+		Remarks:     remarks,
 	}
 
 	// 判断目标是否是结束节点
 	if h.targetStateValue["clazz"] == "end" && h.endHistory == true {
-		sendSubject = "您的工单已处理完成"
-		sendDescription = "您的工单已处理完成，工单描述如下"
+		sendSubject = "工单处理完成，请核对"
+		sendDescription = "您的工单已处理完成，请核对"
 		err = h.tx.Create(&process.CirculationHistory{
 			Model:       base.Model{},
 			Title:       h.workOrderDetails.Title,
@@ -860,7 +887,7 @@ func (h *Handle) HandleWorkOrder(
 			return
 		}
 		if len(noticeList) > 0 {
-			// 查询工单创建人信息
+			// 工单完成：只通知创建人/申请人，使用完成模版
 			err = h.tx.Model(&system.SysUser{}).
 				Where("user_id = ?", h.workOrderDetails.Creator).
 				Find(&sendToUserList).Error
@@ -874,13 +901,12 @@ func (h *Handle) HandleWorkOrder(
 			}
 			bodyData.Subject = sendSubject
 			bodyData.Description = sendDescription
+			// 工单到达结束节点，记录真实完成时间，供模版变量 {{completed_at}} 使用
+			bodyData.CompletedAt = time.Now().Format("2006-01-02 15:04:05")
 
-			// 发送通知
+			// 使用完成通知模版发送
 			go func(bodyData notify.BodyData) {
-				err = bodyData.SendNotify()
-				if err != nil {
-					return
-				}
+				bodyData.SendDoneNotify()
 			}(bodyData)
 		}
 	}

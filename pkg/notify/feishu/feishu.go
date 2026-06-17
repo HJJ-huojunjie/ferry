@@ -146,13 +146,41 @@ func SendFeishuMsgByPhone(phones []string, title, content string) {
 	sendToOpenIDs(openIDs, title, content, token)
 }
 
+// isCardFormat 检测内容是否为飞书卡片JSON格式
+func isCardFormat(content string) bool {
+	trimmed := strings.TrimSpace(content)
+	if !strings.HasPrefix(trimmed, "{") {
+		return false
+	}
+	var obj map[string]interface{}
+	if err := json.Unmarshal([]byte(trimmed), &obj); err != nil {
+		return false
+	}
+	_, hasHeader := obj["header"]
+	_, hasElements := obj["elements"]
+	return hasHeader || hasElements
+}
+
 // sendToOpenIDs 内部函数，向指定 OpenID 列表发送消息
 func sendToOpenIDs(openIDs []string, title, content, token string) {
 
-	msgContent := FeishuMsgContent{
-		Text: fmt.Sprintf("%s\n%s", title, content),
+	var msgType string
+	var contentStr string
+
+	if isCardFormat(content) {
+		// 卡片格式：使用 interactive 类型发送
+		msgType = "interactive"
+		contentStr = strings.TrimSpace(content)
+		logger.Info("[飞书发送] 检测到卡片格式，使用 interactive 类型发送")
+	} else {
+		// 纯文本格式
+		msgType = "text"
+		msgContent := FeishuMsgContent{
+			Text: fmt.Sprintf("%s\n%s", title, content),
+		}
+		contentBytes, _ := json.Marshal(msgContent)
+		contentStr = string(contentBytes)
 	}
-	contentBytes, _ := json.Marshal(msgContent)
 
 	for _, openID := range openIDs {
 		if openID == "" {
@@ -160,10 +188,12 @@ func sendToOpenIDs(openIDs []string, title, content, token string) {
 		}
 		reqBody := FeishuSendMsgReq{
 			ReceiveID: openID,
-			MsgType:   "text",
-			Content:   string(contentBytes),
+			MsgType:   msgType,
+			Content:   contentStr,
 		}
 		b, _ := json.Marshal(reqBody)
+
+		logger.Infof("[飞书发送] 向 OpenID=%s 发送%s消息, 请求体: %s", openID, msgType, string(b))
 
 		req, err := http.NewRequest("POST", FeishuSendMsgURL, bytes.NewBuffer(b))
 		if err != nil {
@@ -179,7 +209,16 @@ func sendToOpenIDs(openIDs []string, title, content, token string) {
 			logger.Errorf("飞书发送消息失败: %v", err)
 			continue
 		}
+
+		respBody, _ := ioutil.ReadAll(resp.Body)
 		resp.Body.Close()
+		logger.Infof("[飞书发送] OpenID=%s 返回: %s", openID, string(respBody))
+
+		var sendResp FeishuSendMsgResp
+		json.Unmarshal(respBody, &sendResp)
+		if sendResp.Code != 0 {
+			logger.Errorf("[飞书发送] 消息发送失败, OpenID=%s, code=%d, msg=%s", openID, sendResp.Code, sendResp.Msg)
+		}
 	}
 	logger.Info("飞书单聊通知发送完成")
 }
@@ -206,15 +245,27 @@ func SendFeishuGroupMsg(title, content string) {
 
 	webhookURL := config.AppId // Webhook 地址存储在 app_id 字段
 
-	msg := FeishuWebhookMsg{
-		MsgType: "text",
-		Content: FeishuWebhookContent{
-			Text: fmt.Sprintf("%s\n%s", title, content),
-		},
+	var msgBody []byte
+	if isCardFormat(content) {
+		// 卡片格式：使用 interactive 类型
+		msg := map[string]interface{}{
+			"msg_type": "interactive",
+			"card":     json.RawMessage(strings.TrimSpace(content)),
+		}
+		msgBody, _ = json.Marshal(msg)
+		logger.Info("[飞书群发送] 检测到卡片格式，使用 interactive 类型发送")
+	} else {
+		// 纯文本格式
+		msg := FeishuWebhookMsg{
+			MsgType: "text",
+			Content: FeishuWebhookContent{
+				Text: fmt.Sprintf("%s\n%s", title, content),
+			},
+		}
+		msgBody, _ = json.Marshal(msg)
 	}
-	b, _ := json.Marshal(msg)
 
-	resp, err := http.Post(webhookURL, "application/json", bytes.NewBuffer(b))
+	resp, err := http.Post(webhookURL, "application/json", bytes.NewBuffer(msgBody))
 	if err != nil {
 		logger.Errorf("飞书群消息发送失败: %v", err)
 		return
@@ -261,6 +312,55 @@ type FeishuUserInfo struct {
 	UserID string `json:"user_id"`
 	Mobile string `json:"mobile"`
 	Name   string `json:"name"`
+}
+
+// GetFeishuUserNameByPhone 通过手机号查询飞书用户姓名
+// 先通过手机号获取 open_id，再通过 open_id 获取用户详细信息（包含姓名）
+func GetFeishuUserNameByPhone(phone, appID, appSecret string) (name string, err error) {
+	token, err := GetTenantAccessToken(appID, appSecret)
+	if err != nil {
+		return
+	}
+
+	// 1. 通过手机号获取 open_id
+	result, err := BatchGetOpenIDByMobile([]string{phone}, appID, appSecret)
+	if err != nil {
+		return
+	}
+	openID, ok := result[phone]
+	if !ok || openID == "" {
+		err = fmt.Errorf("手机号 %s 未在飞书中找到对应用户", phone)
+		return
+	}
+
+	// 2. 通过 open_id 获取用户详细信息
+	url := fmt.Sprintf("%s/%s?user_id_type=open_id", FeishuGetUserURL, openID)
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return
+	}
+	req.Header.Set("Authorization", "Bearer "+token)
+
+	client := &http.Client{Timeout: 10 * time.Second}
+	resp, err := client.Do(req)
+	if err != nil {
+		logger.Errorf("飞书查询用户信息失败: %v", err)
+		return
+	}
+	defer resp.Body.Close()
+
+	body, _ := ioutil.ReadAll(resp.Body)
+	var userResp FeishuUserResp
+	err = json.Unmarshal(body, &userResp)
+	if err != nil {
+		return
+	}
+	if userResp.Code != 0 {
+		err = fmt.Errorf("飞书查询用户信息失败: %s", userResp.Msg)
+		return
+	}
+	name = userResp.Data.User.Name
+	return
 }
 
 // GetUserOpenIDByMobile 通过手机号查询单个用户的飞书OpenID

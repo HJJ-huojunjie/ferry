@@ -24,6 +24,8 @@ func InitData(c *gin.Context) {
 		endTime   string
 		handle    interface{}
 		period    interface{}
+		latest    interface{}
+		extended  map[string]interface{}
 	)
 
 	startTime = c.DefaultQuery("start_time", "")
@@ -80,11 +82,27 @@ func InitData(c *gin.Context) {
 		return
 	}
 
+	// 最新工单动态
+	latest, err = statistics.LatestWorkOrders()
+	if err != nil {
+		app.Error(c, -1, err, "查询最新工单动态失败")
+		return
+	}
+
+	// 扩展统计
+	extended, err = statistics.ExtendedCount()
+	if err != nil {
+		app.Error(c, -1, err, "查询扩展统计失败")
+		return
+	}
+
 	app.OK(c, map[string]interface{}{
-		"count":  count,
-		"ranks":  ranks,
-		"submit": submit,
-		"handle": handle,
-		"period": period,
+		"count":    count,
+		"ranks":    ranks,
+		"submit":   submit,
+		"handle":   handle,
+		"period":   period,
+		"latest":   latest,
+		"extended": extended,
 	}, "")
 }

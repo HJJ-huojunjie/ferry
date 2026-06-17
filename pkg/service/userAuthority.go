@@ -81,67 +81,86 @@ func JudgeUserAuthority(c *gin.Context, workOrderId int, currentState string) (s
 		return
 	}
 
-	// 会签
+	// 会签检查（多人处理场景：所有处理人都完成才流转）
+	isCounterSignMode := false
 	if currentStateValue["processor"] != nil && len(currentStateValue["processor"].([]interface{})) >= 1 {
+		// 1. 检查流程定义中的会签标记
 		if isCounterSign, ok := stateValue["isCounterSign"]; ok {
 			if isCounterSign.(bool) {
-				err = orm.Eloquent.Model(&process.CirculationHistory{}).
-					Where("work_order = ?", workOrderId).
-					Order("id desc").
-					Find(&cirHistoryList).Error
-				if err != nil {
-					return
+				isCounterSignMode = true
+			}
+		}
+		// 2. 检查工单状态：多个个人处理人时自动启用会签
+		if !isCounterSignMode {
+			processMethod, _ := currentStateValue["process_method"].(string)
+			if processMethod == "person" && len(currentStateValue["processor"].([]interface{})) > 1 {
+				isCounterSignMode = true
+			}
+		}
+		// 3. 兼容显式isCounterSign标记
+		if !isCounterSignMode {
+			if ics, ok2 := currentStateValue["isCounterSign"]; ok2 {
+				if icsBool, ok3 := ics.(bool); ok3 && icsBool {
+					if len(currentStateValue["processor"].([]interface{})) > 1 {
+						isCounterSignMode = true
+					}
 				}
-				for _, cirHistoryValue := range cirHistoryList {
-					if cirHistoryValue.Source != stateValue["id"] {
-						break
-					} else if cirHistoryValue.Source == stateValue["id"] {
-						if currentStateValue["process_method"].(string) == "person" {
-							// 验证个人会签
-							if cirHistoryValue.ProcessorId == tools.GetUserId(c) {
-								return
-							}
-						} else if currentStateValue["process_method"].(string) == "role" {
-							// 验证角色会签
-							if stateValue["fullHandle"].(bool) {
-								if cirHistoryValue.ProcessorId == tools.GetUserId(c) {
-									return
-								}
-							} else {
-								var roleUserInfo system.SysUser
-								err = orm.Eloquent.Model(&roleUserInfo).
-									Where("user_id = ?", cirHistoryValue.ProcessorId).
-									Find(&roleUserInfo).
-									Error
-								if err != nil {
-									return
-								}
-								if roleUserInfo.RoleId == tools.GetRoleId(c) {
-									return
-								}
-							}
-						} else if currentStateValue["process_method"].(string) == "department" {
-							// 部门会签
-							if stateValue["fullHandle"].(bool) {
-								if cirHistoryValue.ProcessorId == tools.GetUserId(c) {
-									return
-								}
-							} else {
-								var (
-									deptUserInfo system.SysUser
-								)
-								err = orm.Eloquent.Model(&deptUserInfo).
-									Where("user_id = ?", cirHistoryValue.ProcessorId).
-									Find(&deptUserInfo).
-									Error
-								if err != nil {
-									return
-								}
-
-								if deptUserInfo.DeptId == currentUserInfo.DeptId {
-									return
-								}
-							}
+			}
+		}
+	}
+	if isCounterSignMode {
+		err = orm.Eloquent.Model(&process.CirculationHistory{}).
+			Where("work_order = ?", workOrderId).
+			Order("id desc").
+			Find(&cirHistoryList).Error
+		if err != nil {
+			return
+		}
+		for _, cirHistoryValue := range cirHistoryList {
+			if cirHistoryValue.Source != stateValue["id"] {
+				break
+			} else if cirHistoryValue.Source == stateValue["id"] {
+				if currentStateValue["process_method"].(string) == "person" {
+					// 验证个人会签
+					if cirHistoryValue.ProcessorId == tools.GetUserId(c) {
+						return
+					}
+				} else if currentStateValue["process_method"].(string) == "role" {
+					// 验证角色会签
+					if stateValue["fullHandle"] != nil && stateValue["fullHandle"].(bool) {
+						if cirHistoryValue.ProcessorId == tools.GetUserId(c) {
+							return
+						}
+					} else {
+						var roleUserInfo system.SysUser
+						err = orm.Eloquent.Model(&roleUserInfo).
+							Where("user_id = ?", cirHistoryValue.ProcessorId).
+							Find(&roleUserInfo).
+							Error
+						if err != nil {
+							return
+						}
+						if roleUserInfo.RoleId == tools.GetRoleId(c) {
+							return
+						}
+					}
+				} else if currentStateValue["process_method"].(string) == "department" {
+					// 部门会签
+					if stateValue["fullHandle"] != nil && stateValue["fullHandle"].(bool) {
+						if cirHistoryValue.ProcessorId == tools.GetUserId(c) {
+							return
+						}
+					} else {
+						var deptUserInfo system.SysUser
+						err = orm.Eloquent.Model(&deptUserInfo).
+							Where("user_id = ?", cirHistoryValue.ProcessorId).
+							Find(&deptUserInfo).
+							Error
+						if err != nil {
+							return
+						}
+						if deptUserInfo.DeptId == currentUserInfo.DeptId {
+							return
 						}
 					}
 				}
