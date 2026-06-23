@@ -95,6 +95,23 @@ INSERT INTO `casbin_rule`(`p_type`, `v0`, `v1`, `v2`, `v3`, `v4`, `v5`) VALUES (
 INSERT INTO `casbin_rule`(`p_type`, `v0`, `v1`, `v2`, `v3`, `v4`, `v5`) VALUES ('p', 'common', '/api/v1/user/avatar', 'POST', NULL, NULL, NULL);
 INSERT INTO `casbin_rule`(`p_type`, `v0`, `v1`, `v2`, `v3`, `v4`, `v5`) VALUES ('p', 'common', '/api/v1/user/pwd', 'PUT', NULL, NULL, NULL);
 INSERT INTO `casbin_rule`(`p_type`, `v0`, `v1`, `v2`, `v3`, `v4`, `v5`) VALUES ('p', 'common', '/api/v1/dashboard', 'GET', NULL, NULL, NULL);
+INSERT INTO `casbin_rule`(`p_type`, `v0`, `v1`, `v2`, `v3`, `v4`, `v5`) VALUES ('p', 'admin', '/api/v1/notifyConfig', 'GET', NULL, NULL, NULL);
+INSERT INTO `casbin_rule`(`p_type`, `v0`, `v1`, `v2`, `v3`, `v4`, `v5`) VALUES ('p', 'admin', '/api/v1/notifyConfig', 'POST', NULL, NULL, NULL);
+INSERT INTO `casbin_rule`(`p_type`, `v0`, `v1`, `v2`, `v3`, `v4`, `v5`) VALUES ('p', 'admin', '/api/v1/notifyConfig', 'PUT', NULL, NULL, NULL);
+INSERT INTO `casbin_rule`(`p_type`, `v0`, `v1`, `v2`, `v3`, `v4`, `v5`) VALUES ('p', 'admin', '/api/v1/notifyConfig/:id', 'DELETE', NULL, NULL, NULL);
+INSERT INTO `casbin_rule`(`p_type`, `v0`, `v1`, `v2`, `v3`, `v4`, `v5`) VALUES ('p', 'admin', '/api/v1/notifyMapping', 'GET', NULL, NULL, NULL);
+INSERT INTO `casbin_rule`(`p_type`, `v0`, `v1`, `v2`, `v3`, `v4`, `v5`) VALUES ('p', 'admin', '/api/v1/notifyMapping', 'POST', NULL, NULL, NULL);
+INSERT INTO `casbin_rule`(`p_type`, `v0`, `v1`, `v2`, `v3`, `v4`, `v5`) VALUES ('p', 'admin', '/api/v1/notifyMapping/:id', 'DELETE', NULL, NULL, NULL);
+INSERT INTO `casbin_rule`(`p_type`, `v0`, `v1`, `v2`, `v3`, `v4`, `v5`) VALUES ('p', 'admin', '/api/v1/notifyInit', 'POST', NULL, NULL, NULL);
+INSERT INTO `casbin_rule`(`p_type`, `v0`, `v1`, `v2`, `v3`, `v4`, `v5`) VALUES ('p', 'admin', '/api/v1/notifyTemplate', 'GET', NULL, NULL, NULL);
+INSERT INTO `casbin_rule`(`p_type`, `v0`, `v1`, `v2`, `v3`, `v4`, `v5`) VALUES ('p', 'admin', '/api/v1/notifyTemplate', 'POST', NULL, NULL, NULL);
+INSERT INTO `casbin_rule`(`p_type`, `v0`, `v1`, `v2`, `v3`, `v4`, `v5`) VALUES ('p', 'admin', '/api/v1/notifyTemplate/variables', 'GET', NULL, NULL, NULL);
+INSERT INTO `casbin_rule`(`p_type`, `v0`, `v1`, `v2`, `v3`, `v4`, `v5`) VALUES ('p', 'admin', '/api/v1/notifyTemplate', 'PUT', NULL, NULL, NULL);
+INSERT INTO `casbin_rule`(`p_type`, `v0`, `v1`, `v2`, `v3`, `v4`, `v5`) VALUES ('p', 'admin', '/api/v1/notifyTemplate/:id', 'DELETE', NULL, NULL, NULL);
+INSERT INTO `casbin_rule`(`p_type`, `v0`, `v1`, `v2`, `v3`, `v4`, `v5`) VALUES ('p', 'admin', '/api/v1/notifyVariable', 'GET', NULL, NULL, NULL);
+INSERT INTO `casbin_rule`(`p_type`, `v0`, `v1`, `v2`, `v3`, `v4`, `v5`) VALUES ('p', 'admin', '/api/v1/notifyVariable', 'POST', NULL, NULL, NULL);
+INSERT INTO `casbin_rule`(`p_type`, `v0`, `v1`, `v2`, `v3`, `v4`, `v5`) VALUES ('p', 'admin', '/api/v1/notifyVariable', 'PUT', NULL, NULL, NULL);
+INSERT INTO `casbin_rule`(`p_type`, `v0`, `v1`, `v2`, `v3`, `v4`, `v5`) VALUES ('p', 'admin', '/api/v1/notifyVariable/:id', 'DELETE', NULL, NULL, NULL);
 COMMIT;
 
 BEGIN;
@@ -285,6 +302,25 @@ INSERT INTO sys_menu (menu_id, menu_name, title, icon, path, paths, menu_type, `
 INSERT INTO sys_menu (menu_id, menu_name, title, icon, path, paths, menu_type, `action`, permission, parent_id, no_cache, breadcrumb, component, sort, visible, create_by, update_by, is_frame, create_time, update_time, delete_time) VALUES (369, '', '克隆流程', 'bug', '/api/v1/process/clone/:id', '/0/63/281/282/309/369', 'A', 'POST', '', 309, '0', '', '', 0, '1', '1', '', 1, '2021-02-19 23:25:18', '2021-02-19 23:25:18', null);
 INSERT INTO sys_menu (menu_id, menu_name, title, icon, path, paths, menu_type, action, permission, parent_id, no_cache, breadcrumb, component, sort, visible, create_by, update_by, is_frame, create_time, update_time, delete_time) VALUES (370, '', '重开工单', 'guide', '', '/0/268/271/370', 'F', '', 'process:list:myCreate:reopen', 271, '0', '', '', 0, '0', '1', '', 1, '2021-03-02 22:45:17', '2021-03-02 22:45:17', null);
 INSERT INTO sys_menu (menu_id, menu_name, title, icon, path, paths, menu_type, action, permission, parent_id, no_cache, breadcrumb, component, sort, visible, create_by, update_by, is_frame, create_time, update_time, delete_time) VALUES (371, '', '重开工单', 'bug', '/api/v1/work-order/reopen/:id', '/0/63/281/333/371', 'A', 'POST', '', 333, '0', '', '', 0, '1', '1', '', 1, '2021-03-02 22:46:46', '2021-03-02 22:46:46', null);
+INSERT INTO sys_menu (menu_id, menu_name, title, icon, path, paths, menu_type, `action`, permission, parent_id, no_cache, breadcrumb, component, sort, visible, create_by, update_by, is_frame, create_time, update_time, delete_time) VALUES (373, 'NotifyConfig', '通知配置', 'message', 'notifyConfig', '/0/2/373', 'C', '', 'system:notifyConfig:manage', 2, '0', '', '/system/notifyConfig/index', 8, '0', '1', '1', 1, '2024-06-01 00:00:00', '2024-06-01 00:00:00', null);
+INSERT INTO sys_menu (menu_id, menu_name, title, icon, path, paths, menu_type, `action`, permission, parent_id, no_cache, breadcrumb, component, sort, visible, create_by, update_by, is_frame, create_time, update_time, delete_time) VALUES (374, 'NotifyVariable', '通知变量', 'edit', 'notifyVariable', '/0/2/374', 'C', '', 'system:notifyVariable:manage', 2, '0', '', '/system/notifyVariable/index', 9, '0', '1', '1', 1, '2024-06-01 00:00:00', '2024-06-01 00:00:00', null);
+INSERT INTO sys_menu (menu_id, menu_name, title, icon, path, paths, menu_type, `action`, permission, parent_id, no_cache, breadcrumb, component, sort, visible, create_by, update_by, is_frame, create_time, update_time, delete_time) VALUES (375, '', '获取通知配置', 'bug', '/api/v1/notifyConfig', '/0/63/280/373/375', 'A', 'GET', '', 373, '0', '', '', 0, '1', '1', '', 1, '2024-06-01 00:00:00', '2024-06-01 00:00:00', null);
+INSERT INTO sys_menu (menu_id, menu_name, title, icon, path, paths, menu_type, `action`, permission, parent_id, no_cache, breadcrumb, component, sort, visible, create_by, update_by, is_frame, create_time, update_time, delete_time) VALUES (376, '', '设置通知配置', 'bug', '/api/v1/notifyConfig', '/0/63/280/373/376', 'A', 'POST', '', 373, '0', '', '', 0, '1', '1', '', 1, '2024-06-01 00:00:00', '2024-06-01 00:00:00', null);
+INSERT INTO sys_menu (menu_id, menu_name, title, icon, path, paths, menu_type, `action`, permission, parent_id, no_cache, breadcrumb, component, sort, visible, create_by, update_by, is_frame, create_time, update_time, delete_time) VALUES (377, '', '更新通知配置', 'bug', '/api/v1/notifyConfig', '/0/63/280/373/377', 'A', 'PUT', '', 373, '0', '', '', 0, '1', '1', '', 1, '2024-06-01 00:00:00', '2024-06-01 00:00:00', null);
+INSERT INTO sys_menu (menu_id, menu_name, title, icon, path, paths, menu_type, `action`, permission, parent_id, no_cache, breadcrumb, component, sort, visible, create_by, update_by, is_frame, create_time, update_time, delete_time) VALUES (378, '', '删除通知配置', 'bug', '/api/v1/notifyConfig/:id', '/0/63/280/373/378', 'A', 'DELETE', '', 373, '0', '', '', 0, '1', '1', '', 1, '2024-06-01 00:00:00', '2024-06-01 00:00:00', null);
+INSERT INTO sys_menu (menu_id, menu_name, title, icon, path, paths, menu_type, `action`, permission, parent_id, no_cache, breadcrumb, component, sort, visible, create_by, update_by, is_frame, create_time, update_time, delete_time) VALUES (379, '', '获取通知模版', 'bug', '/api/v1/notifyTemplate', '/0/63/280/373/379', 'A', 'GET', '', 373, '0', '', '', 0, '1', '1', '', 1, '2024-06-01 00:00:00', '2024-06-01 00:00:00', null);
+INSERT INTO sys_menu (menu_id, menu_name, title, icon, path, paths, menu_type, `action`, permission, parent_id, no_cache, breadcrumb, component, sort, visible, create_by, update_by, is_frame, create_time, update_time, delete_time) VALUES (380, '', '创建通知模版', 'bug', '/api/v1/notifyTemplate', '/0/63/280/373/380', 'A', 'POST', '', 373, '0', '', '', 0, '1', '1', '', 1, '2024-06-01 00:00:00', '2024-06-01 00:00:00', null);
+INSERT INTO sys_menu (menu_id, menu_name, title, icon, path, paths, menu_type, `action`, permission, parent_id, no_cache, breadcrumb, component, sort, visible, create_by, update_by, is_frame, create_time, update_time, delete_time) VALUES (381, '', '更新通知模版', 'bug', '/api/v1/notifyTemplate', '/0/63/280/373/381', 'A', 'PUT', '', 373, '0', '', '', 0, '1', '1', '', 1, '2024-06-01 00:00:00', '2024-06-01 00:00:00', null);
+INSERT INTO sys_menu (menu_id, menu_name, title, icon, path, paths, menu_type, `action`, permission, parent_id, no_cache, breadcrumb, component, sort, visible, create_by, update_by, is_frame, create_time, update_time, delete_time) VALUES (382, '', '删除通知模版', 'bug', '/api/v1/notifyTemplate/:id', '/0/63/280/373/382', 'A', 'DELETE', '', 373, '0', '', '', 0, '1', '1', '', 1, '2024-06-01 00:00:00', '2024-06-01 00:00:00', null);
+INSERT INTO sys_menu (menu_id, menu_name, title, icon, path, paths, menu_type, `action`, permission, parent_id, no_cache, breadcrumb, component, sort, visible, create_by, update_by, is_frame, create_time, update_time, delete_time) VALUES (383, '', '初始化通知数据', 'bug', '/api/v1/notifyInit', '/0/63/280/373/383', 'A', 'POST', '', 373, '0', '', '', 0, '1', '1', '', 1, '2024-06-01 00:00:00', '2024-06-01 00:00:00', null);
+INSERT INTO sys_menu (menu_id, menu_name, title, icon, path, paths, menu_type, `action`, permission, parent_id, no_cache, breadcrumb, component, sort, visible, create_by, update_by, is_frame, create_time, update_time, delete_time) VALUES (384, '', '通知渠道映射', 'bug', '/api/v1/notifyMapping', '/0/63/280/373/384', 'A', 'GET', '', 373, '0', '', '', 0, '1', '1', '', 1, '2024-06-01 00:00:00', '2024-06-01 00:00:00', null);
+INSERT INTO sys_menu (menu_id, menu_name, title, icon, path, paths, menu_type, `action`, permission, parent_id, no_cache, breadcrumb, component, sort, visible, create_by, update_by, is_frame, create_time, update_time, delete_time) VALUES (385, '', '设置渠道映射', 'bug', '/api/v1/notifyMapping', '/0/63/280/373/385', 'A', 'POST', '', 373, '0', '', '', 0, '1', '1', '', 1, '2024-06-01 00:00:00', '2024-06-01 00:00:00', null);
+INSERT INTO sys_menu (menu_id, menu_name, title, icon, path, paths, menu_type, `action`, permission, parent_id, no_cache, breadcrumb, component, sort, visible, create_by, update_by, is_frame, create_time, update_time, delete_time) VALUES (386, '', '删除渠道映射', 'bug', '/api/v1/notifyMapping/:id', '/0/63/280/373/386', 'A', 'DELETE', '', 373, '0', '', '', 0, '1', '1', '', 1, '2024-06-01 00:00:00', '2024-06-01 00:00:00', null);
+INSERT INTO sys_menu (menu_id, menu_name, title, icon, path, paths, menu_type, `action`, permission, parent_id, no_cache, breadcrumb, component, sort, visible, create_by, update_by, is_frame, create_time, update_time, delete_time) VALUES (387, '', '获取通知变量', 'bug', '/api/v1/notifyVariable', '/0/63/280/374/387', 'A', 'GET', '', 374, '0', '', '', 0, '1', '1', '', 1, '2024-06-01 00:00:00', '2024-06-01 00:00:00', null);
+INSERT INTO sys_menu (menu_id, menu_name, title, icon, path, paths, menu_type, `action`, permission, parent_id, no_cache, breadcrumb, component, sort, visible, create_by, update_by, is_frame, create_time, update_time, delete_time) VALUES (388, '', '创建通知变量', 'bug', '/api/v1/notifyVariable', '/0/63/280/374/388', 'A', 'POST', '', 374, '0', '', '', 0, '1', '1', '', 1, '2024-06-01 00:00:00', '2024-06-01 00:00:00', null);
+INSERT INTO sys_menu (menu_id, menu_name, title, icon, path, paths, menu_type, `action`, permission, parent_id, no_cache, breadcrumb, component, sort, visible, create_by, update_by, is_frame, create_time, update_time, delete_time) VALUES (389, '', '更新通知变量', 'bug', '/api/v1/notifyVariable', '/0/63/280/374/389', 'A', 'PUT', '', 374, '0', '', '', 0, '1', '1', '', 1, '2024-06-01 00:00:00', '2024-06-01 00:00:00', null);
+INSERT INTO sys_menu (menu_id, menu_name, title, icon, path, paths, menu_type, `action`, permission, parent_id, no_cache, breadcrumb, component, sort, visible, create_by, update_by, is_frame, create_time, update_time, delete_time) VALUES (390, '', '删除通知变量', 'bug', '/api/v1/notifyVariable/:id', '/0/63/280/374/390', 'A', 'DELETE', '', 374, '0', '', '', 0, '1', '1', '', 1, '2024-06-01 00:00:00', '2024-06-01 00:00:00', null);
+INSERT INTO sys_menu (menu_id, menu_name, title, icon, path, paths, menu_type, `action`, permission, parent_id, no_cache, breadcrumb, component, sort, visible, create_by, update_by, is_frame, create_time, update_time, delete_time) VALUES (391, '', '获取模版变量列表', 'bug', '/api/v1/notifyTemplate/variables', '/0/63/280/373/391', 'A', 'GET', '', 373, '0', '', '', 0, '1', '1', '', 1, '2024-06-01 00:00:00', '2024-06-01 00:00:00', null);
 COMMIT;
 
 BEGIN;
@@ -487,6 +523,25 @@ INSERT INTO `sys_role_menu`(`role_id`, `menu_id`, `role_name`, `create_by`, `upd
 INSERT INTO `sys_role_menu`(`role_id`, `menu_id`, `role_name`, `create_by`, `update_by`) VALUES (2, 267, 'common', NULL, NULL);
 INSERT INTO `sys_role_menu`(`role_id`, `menu_id`, `role_name`, `create_by`, `update_by`) VALUES (2, 280, 'common', NULL, NULL);
 INSERT INTO `sys_role_menu`(`role_id`, `menu_id`, `role_name`, `create_by`, `update_by`) VALUES (2, 344, 'common', NULL, NULL);
+INSERT INTO `sys_role_menu`(`role_id`, `menu_id`, `role_name`, `create_by`, `update_by`) VALUES (1, 373, 'admin', NULL, NULL);
+INSERT INTO `sys_role_menu`(`role_id`, `menu_id`, `role_name`, `create_by`, `update_by`) VALUES (1, 374, 'admin', NULL, NULL);
+INSERT INTO `sys_role_menu`(`role_id`, `menu_id`, `role_name`, `create_by`, `update_by`) VALUES (1, 375, 'admin', NULL, NULL);
+INSERT INTO `sys_role_menu`(`role_id`, `menu_id`, `role_name`, `create_by`, `update_by`) VALUES (1, 376, 'admin', NULL, NULL);
+INSERT INTO `sys_role_menu`(`role_id`, `menu_id`, `role_name`, `create_by`, `update_by`) VALUES (1, 377, 'admin', NULL, NULL);
+INSERT INTO `sys_role_menu`(`role_id`, `menu_id`, `role_name`, `create_by`, `update_by`) VALUES (1, 378, 'admin', NULL, NULL);
+INSERT INTO `sys_role_menu`(`role_id`, `menu_id`, `role_name`, `create_by`, `update_by`) VALUES (1, 379, 'admin', NULL, NULL);
+INSERT INTO `sys_role_menu`(`role_id`, `menu_id`, `role_name`, `create_by`, `update_by`) VALUES (1, 380, 'admin', NULL, NULL);
+INSERT INTO `sys_role_menu`(`role_id`, `menu_id`, `role_name`, `create_by`, `update_by`) VALUES (1, 381, 'admin', NULL, NULL);
+INSERT INTO `sys_role_menu`(`role_id`, `menu_id`, `role_name`, `create_by`, `update_by`) VALUES (1, 382, 'admin', NULL, NULL);
+INSERT INTO `sys_role_menu`(`role_id`, `menu_id`, `role_name`, `create_by`, `update_by`) VALUES (1, 383, 'admin', NULL, NULL);
+INSERT INTO `sys_role_menu`(`role_id`, `menu_id`, `role_name`, `create_by`, `update_by`) VALUES (1, 384, 'admin', NULL, NULL);
+INSERT INTO `sys_role_menu`(`role_id`, `menu_id`, `role_name`, `create_by`, `update_by`) VALUES (1, 385, 'admin', NULL, NULL);
+INSERT INTO `sys_role_menu`(`role_id`, `menu_id`, `role_name`, `create_by`, `update_by`) VALUES (1, 386, 'admin', NULL, NULL);
+INSERT INTO `sys_role_menu`(`role_id`, `menu_id`, `role_name`, `create_by`, `update_by`) VALUES (1, 387, 'admin', NULL, NULL);
+INSERT INTO `sys_role_menu`(`role_id`, `menu_id`, `role_name`, `create_by`, `update_by`) VALUES (1, 388, 'admin', NULL, NULL);
+INSERT INTO `sys_role_menu`(`role_id`, `menu_id`, `role_name`, `create_by`, `update_by`) VALUES (1, 389, 'admin', NULL, NULL);
+INSERT INTO `sys_role_menu`(`role_id`, `menu_id`, `role_name`, `create_by`, `update_by`) VALUES (1, 390, 'admin', NULL, NULL);
+INSERT INTO `sys_role_menu`(`role_id`, `menu_id`, `role_name`, `create_by`, `update_by`) VALUES (1, 391, 'admin', NULL, NULL);
 COMMIT;
 
 BEGIN;
@@ -498,7 +553,13 @@ COMMIT;
 
 BEGIN;
 INSERT INTO `sys_settings`(`id`, `create_time`, `update_time`, `delete_time`, `classify`, `content`) VALUES (3, '2020-08-19 01:00:19', '2020-08-19 12:40:47', NULL, 2, '[{\"ldap_field_name\": \"givenName\", \"local_field_name\": \"nick_name\", \"local_field_nick\": \"用户昵称\"}, {\"ldap_field_name\": \"\", \"local_field_name\": \"phone\", \"local_field_nick\": \"手机号\"}, {\"ldap_field_name\": \"\", \"local_field_name\": \"avatar\", \"local_field_nick\": \"头像\"}, {\"ldap_field_name\": \"\", \"local_field_name\": \"sex\", \"local_field_nick\": \"性别\"}, {\"ldap_field_name\": \"mail\", \"local_field_name\": \"email\", \"local_field_nick\": \"邮箱\"}, {\"ldap_field_name\": \"\", \"local_field_name\": \"remark\", \"local_field_nick\": \"备注\"}]');
-INSERT INTO `sys_settings`(`id`, `create_time`, `update_time`, `delete_time`, `classify`, `content`) VALUES (4, '2020-08-19 12:42:10', '2020-08-19 13:22:56', NULL, 1, '{\"logo\": \"https://www.fdevops.com/wp-content/uploads/2020/08/1597815294-ferry_logo_white.png\", \"name\": \"ferry 管理平台\"}');
+INSERT INTO `sys_settings`(`id`, `create_time`, `update_time`, `delete_time`, `classify`, `content`) VALUES (4, '2020-08-19 12:42:10', '2020-08-19 13:22:56', NULL, 1, '{\"logo\": \"https://www.fdevops.com/wp-content/uploads/2020/08/1597815294-ferry_logo_white.png\", \"name\": \"ferry 管理平台\", \"is_verify_code\": false}');
+COMMIT;
+
+BEGIN;
+INSERT INTO `sys_notify_variable`(`var_key`, `var_name`, `value_type`, `value`, `description`, `enable`) VALUES ('company_name', '公司名称', 'static', 'ferry', '公司名称，可在通知模板中通过 {{company_name}} 引用', 1);
+INSERT INTO `sys_notify_variable`(`var_key`, `var_name`, `value_type`, `value`, `description`, `enable`) VALUES ('help_url', '帮助链接', 'static', 'http://ferry.fdevops.com', '帮助文档链接，可在通知模板中通过 {{help_url}} 引用', 1);
+INSERT INTO `sys_notify_variable`(`var_key`, `var_name`, `value_type`, `value`, `description`, `enable`) VALUES ('system_url', '系统地址', 'static', 'http://localhost:8002', '系统访问地址，可在通知模板中通过 {{system_url}} 引用', 1);
 COMMIT;
 
 SET FOREIGN_KEY_CHECKS = 1;

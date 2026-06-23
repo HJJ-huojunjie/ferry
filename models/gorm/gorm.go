@@ -31,5 +31,10 @@ func AutoMigrate(db *gorm.DB) error {
 		new(process.Info),
 		new(process.History),
 		new(process.CirculationHistory),
+
+		// 通知系统
+		new(system.NotifyConfig),
+		new(system.NotifyTemplate),
+		new(system.NotifyVariable),
 	).Error
 }

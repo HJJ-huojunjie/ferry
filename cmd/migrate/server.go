@@ -52,5 +52,19 @@ func migrateModel() error {
 	if config2.DatabaseConfig.Dbtype == "mysql" {
 		orm.Eloquent = orm.Eloquent.Set("gorm:table_options", "ENGINE=InnoDB CHARSET=utf8mb4")
 	}
-	return gorm.AutoMigrate(orm.Eloquent)
+	err := gorm.AutoMigrate(orm.Eloquent)
+	if err != nil {
+		return err
+	}
+	// 创建 sys_notify_user_mapping 表（无 Go model，需手动建表）
+	return orm.Eloquent.Exec(
+		`CREATE TABLE IF NOT EXISTS sys_notify_user_mapping (
+			id int(11) NOT NULL AUTO_INCREMENT,
+			user_id int(11) NOT NULL COMMENT '系统用户ID',
+			channel int(11) NOT NULL COMMENT '渠道类型',
+			open_id varchar(128) DEFAULT NULL COMMENT '第三方用户标识',
+			PRIMARY KEY (id),
+			KEY idx_user_id (user_id)
+		) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`,
+	).Error
 }
