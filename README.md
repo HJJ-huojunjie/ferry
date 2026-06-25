@@ -10,5 +10,9 @@
 2.下载压缩包后解压，编辑 ferry/config/settings.yml 文件，将其中的mysql及redis换成自己的地址
 <img width="513" height="1225" alt="image" src="https://github.com/user-attachments/assets/9fde29ef-6813-4aa0-8071-0bb0f9e12542" />
 
+
+
 建议使用docker部署，启动命令
 docker run -itd --name ferry -v /data/ferry/config:/opt/workflow/ferry/config -p 8002:8002 ferry_pro:06-24
+docker hub镜像
+docker push laibaxiaolayu/ferry-pro:tagname
