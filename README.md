@@ -3,7 +3,7 @@
 <img width="2533" height="1261" alt="1b8f200d-a4cd-46c8-aed5-f430876b5c8c" src="https://github.com/user-attachments/assets/02583559-0d16-45d9-a4bc-61dfb592fac5" />
 <img width="806" height="671" alt="bcd4b911-3572-43f6-a009-774af748bf97" src="https://github.com/user-attachments/assets/3a180cb0-2742-443b-babe-18435dc97c3f" />
 
-##使用说明##
+## 使用说明 ##
 
 
 1.需提前准备mysql数据库及redis，在mysql中创建ferry的库
@@ -16,3 +16,6 @@
 docker run -itd --name ferry -v /data/ferry/config:/opt/workflow/ferry/config -p 8002:8002 ferry_pro:06-24
 docker hub镜像
 docker push laibaxiaolayu/ferry-pro:tagname
+
+# 兰玉磊ferry系统github地址
+https://github.com/lanyulei/ferry
