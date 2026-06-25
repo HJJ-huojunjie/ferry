@@ -4,6 +4,8 @@
 <img width="806" height="671" alt="bcd4b911-3572-43f6-a009-774af748bf97" src="https://github.com/user-attachments/assets/3a180cb0-2742-443b-babe-18435dc97c3f" />
 
 ##使用说明##
+
+
 1.需提前准备mysql数据库及redis，在mysql中创建ferry的库
 2.下载压缩包后解压，编辑 ferry/config/settings.yml 文件，将其中的mysql及redis换成自己的地址
 <img width="513" height="1225" alt="image" src="https://github.com/user-attachments/assets/9fde29ef-6813-4aa0-8071-0bb0f9e12542" />
